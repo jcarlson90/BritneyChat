@@ -9,7 +9,8 @@ from decouple import config
 import openai
 
 #custom fucntion imports
-from functions.openai_requests import convert_audio_to_text
+from functions.database import store_messages, reset_messages
+from functions.openai_requests import convert_audio_to_text, get_chat_response
 
 #initiate App
 app = FastAPI()
@@ -39,6 +40,12 @@ async def check_health():
     print("jake")
     return {"message": "Healthy"} 
 
+# Reset Messages
+@app.get("/reset")
+async def reset_conversation():
+    reset_messages()
+    return {"message": "conversation reset"} 
+
 # Get audio
 @app.get("/post-audio-get/")
 async def get_audio():
@@ -49,7 +56,17 @@ async def get_audio():
     # decode audio
     message_decoded = convert_audio_to_text(audio_input)
 
-    print(message_decoded)
+    # Guard : ensure message decoded
+    if not message_decoded:
+        return HTTPException(status_code=400, detail="Failed to decode Audio")
+    
+    # get chat GPT response
+    chat_response = get_chat_response(message_decoded)
+
+    #store messages
+    store_messages(message_decoded, chat_response)
+
+    print(chat_response)
 
     return "Done"
 
