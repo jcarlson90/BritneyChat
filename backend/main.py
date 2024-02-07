@@ -1,3 +1,4 @@
+# source venv/bin/activate
 # uvicorn main:app
 # uvicorn main:app --reload
 
@@ -8,6 +9,7 @@ from decouple import config
 import openai
 
 #custom fucntion imports
+from functions.openai_requests import convert_audio_to_text
 
 #initiate App
 app = FastAPI()
@@ -30,7 +32,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health check
 
 @app.get("/health")
 async def check_health():
+    print("jake")
     return {"message": "Healthy"} 
+
+# Get audio
+@app.get("/post-audio-get/")
+async def get_audio():
+
+# get saved audio
+    audio_input = open("voice.mp3", "rb")
+
+    # decode audio
+    message_decoded = convert_audio_to_text(audio_input)
+
+    print(message_decoded)
+
+    return "Done"
+
+
+# Post bot response
+# Note: not playing in browser when using post requests
+# @app.post("/post-audio")
+# async def post_audio(file: UploadFile = File(...)):
+    # print("yo")
